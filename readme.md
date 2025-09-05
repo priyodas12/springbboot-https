@@ -10,7 +10,7 @@ This project demonstrates a **Spring Boot application** configured with:
 ### Features
 
 - **User Authentication:** JWT tokens for login and resource access
-- **Fuzzy Search:** Leverages PostgreSQL `pg_trgm` extension for approximate string matching
+- **Fuzzy Search:** Leverages PostgreSQL `pg_trgm` extension for approximate string matching(to be added**)
 - **HTTPS:** Secure communication using a self-signed CA
 - **Spring Security:** Protect endpoints and whitelist specific URLs
 - **Database:** PostgreSQL with proper schema, sequences, and constraints
