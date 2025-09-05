@@ -1,3 +1,9 @@
+## Overview
+
+- HTTPS ensures secure communication between client and server.
+- For local development, browsers and clients do **not trust self-signed certificates** by default.
+- Creating your **own CA** allows you to sign server certificates, which can then be trusted locally.
+
 ### secure sign up:
 
 ```
