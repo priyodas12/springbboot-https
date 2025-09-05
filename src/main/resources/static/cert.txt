@@ -1,0 +1,75 @@
+What is a CA?
+************
+A CA (Certificate Authority) is an entity that signs certificates to prove that they are trusted.
+    - Normally, browsers trust certificates signed by well-known public CAs (like DigiCert, Let’s Encrypt).
+    - For local dev, we create our own CA to sign our server certificate so tools like Insomnia can trust it.
+
+Generate CA private key:
+***********************
+    openssl genrsa -out <master-private-key-name>.key 4096
+        - genrsa → generate an RSA private key
+        - 4096 → size of the key in bits (stronger key than 2048)
+
+Create self-signed CA certificate:
+**********************************
+    openssl req -x509 -new -nodes -key <master-private-key-name>.key -sha256 -days 3650 -out <master-crt-name>.crt \
+      -subj "/C=IN/ST=KA/L=BLR/O=XYZ/OU=Dev/CN=localhost"
+
+      - req → create a certificate request (or self-signed cert)
+      - x509 → make it a self-signed certificate (not just a CSR)
+      - new → create a new certificate request
+      - nodes → do not encrypt the private key (no passphrase)
+      - key myCA.key → use the CA private key to sign the certificate
+      - sha256 → use SHA-256 as the hashing algorithm
+      - days 3650 → validity of the cert (10 years)
+      - out myCA.crt → output file for CA certificate
+      - subj "/C=IN/ST=State/L=City/O=MyCompany/OU=Dev/CN=MyLocalCA" → subject info (country, state, org, CN etc.)
+
+Generate springboot server private key:
+***************************************
+    openssl genrsa -out <springboot-server-private-key>.key 2048
+
+Create certificate signing request (CSR):
+****************************************
+    openssl req -new -key <springboot-server-private-key>.key -out <springboot-server-csr>.csr \
+      -subj "/C=IN/ST=KA/L=BLR/O=XYZ/OU=Dev/CN=localhost"
+
+Sign the server CSR with CA:
+***************************
+    openssl x509 -req -in <springboot-server-csr>.csr -CA <master-crt-name>.crt -CAkey <master-private-key-name>.key -CAcreateserial \
+      -out <signed-server-cert>.crt -days 365 -sha256
+
+        x509 -req → sign a CSR and output a certificate
+        -in <springboot-server-csr>.csr → input CSR file
+        -CA <master-crt-name>.crt → use CA certificate to sign
+        -CAkey <master-private-key-name>.key → use CA private key to sign
+        -CAcreateserial → create a serial number file (myCA.srl) automatically
+        -out <signed-server-cert>.crt → signed server certificate output
+        -days 365 → validity in days
+        -sha256 → hashing algorithm
+
+Create PKCS12 keystore for Spring Boot:
+**************************************
+    openssl pkcs12 -export -in <signed-server-cert>.crt -inkey <springboot-server-private-key>.key -out springboot.p12 \
+      -name springboot -CAfile <master-crt-name>.crt -caname root
+
+        pkcs12 -export → create a PKCS12 keystore
+        -in <signed-server-cert>.crt → server certificate
+        -inkey <springboot-server-private-key>.key → server private key
+        -out springboot.p12 → output PKCS12 keystore file
+        -name springboot → alias for the key inside the keystore
+        -CAfile <master-crt-name>.crt → include CA certificate in the chain
+        -caname root → name for CA in the keystore
+
+In a nutshell:
+=============
+    CA key & cert → your local trusted authority
+    Server key & CSR → signed server cert → used by Spring Boot
+    PKCS12 → Spring Boot friendly keystore
+
+And for Insomnia / Postman:
++++++++++++++++++++++++++++
+    Certificate file → <signed-server-cert>.crt
+    Private key file → <springboot-server-private-key>.key
+    CA file (trust) → <master-crt-name>.crt
+    Passphrase → leave empty unless you added one
