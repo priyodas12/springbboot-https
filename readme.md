@@ -1,8 +1,29 @@
-## Overview
+# Spring Boot Secure App with PostgreSQL Fuzzy Search
 
-- HTTPS ensures secure communication between client and server.
-- For local development, browsers and clients do **not trust self-signed certificates** by default.
-- Creating your **own CA** allows you to sign server certificates, which can then be trusted locally.
+This project demonstrates a **Spring Boot application** configured with:
+
+- **HTTPS** for secure communication
+- **JWT-based authentication**
+- **PostgreSQL** with fuzzy search capabilities
+- Recommended username setup for local development
+
+### Features
+
+- **User Authentication:** JWT tokens for login and resource access
+- **Fuzzy Search:** Leverages PostgreSQL `pg_trgm` extension for approximate string matching
+- **HTTPS:** Secure communication using a self-signed CA
+- **Spring Security:** Protect endpoints and whitelist specific URLs
+- **Database:** PostgreSQL with proper schema, sequences, and constraints
+
+---
+
+### Prerequisites
+
+- Java 21
+- Maven
+- PostgreSQL 15+
+- OpenSSL (for certificate generation)
+- Postman or Insomnia (for API testing)
 
 ### secure sign up:
 
