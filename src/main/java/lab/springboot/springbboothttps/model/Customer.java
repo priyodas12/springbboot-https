@@ -11,7 +11,12 @@ import java.util.Date;
 @Data
 @Builder
 @Entity
-@Table(name = "customers")
+@Table(name = "customers", uniqueConstraints = {
+        @UniqueConstraint(name = "idx_customer_username", columnNames = {"username"})
+}, indexes = {
+        @Index(name = "idx_customer_username", columnList = "username"),
+        @Index(name = "idx_customer_email", columnList = "email_id")
+})
 @AllArgsConstructor
 public class Customer {
     @Id
@@ -24,8 +29,10 @@ public class Customer {
     private String email;
     @Column(name = "is_active")
     private boolean isActive;
+    @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "created_at")
     private Date createdDate;
+    @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "updated_at")
     private Date updatedDate;
     private String password;

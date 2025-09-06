@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS customers
     password   VARCHAR(255) NOT NULL,
     email_id   VARCHAR(100) NOT NULL UNIQUE,
     is_active  BOOLEAN   DEFAULT TRUE,
-    phone      VARCHAR(10),
+    phone      VARCHAR(100),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -37,3 +37,6 @@ CREATE TABLE IF NOT EXISTS customer_roles
     role_id BIGINT NOT NULL REFERENCES roles (id),
     PRIMARY KEY (user_id, role_id)
 );
+
+CREATE UNIQUE INDEX idx_customer_username ON customers (lower(username));
+CREATE INDEX idx_customer_email ON customers (lower(email_id));
