@@ -37,4 +37,15 @@ curl --request POST \
 	"password": "your_password",
 	"email": "username@host.domain"
 }'
+
+
 ```
+
+### bulk load customers:
+
+````
+curl --request GET \
+  --url https://localhost:8443/auth/customers/10 \
+  --header 'Content-Type: application/json' \
+  --header 'User-Agent: insomnia/11.4.0'
+````

@@ -19,6 +19,7 @@ public class CustomerController {
         this.customerAuthService = customerAuthService;
     }
 
+    //todo: change to POST
     @GetMapping("/customers/{count}")
     public ResponseEntity<Boolean> createBulkCustomer(@PathVariable("count") int count) {
         return ResponseEntity.ok(customerAuthService.createBulkCustomer(count));
