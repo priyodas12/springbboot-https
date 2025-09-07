@@ -15,6 +15,7 @@ import java.time.Instant;
 
 import static org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE;
 
+//todo : fix exception handler mapping
 @Log4j2
 @ControllerAdvice
 public class GlobalExceptionHandler {

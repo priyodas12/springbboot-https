@@ -3,9 +3,7 @@ package lab.springboot.springbboothttps.service;
 
 import jakarta.validation.Valid;
 import lab.springboot.springbboothttps.dao.CustomerDao;
-import lab.springboot.springbboothttps.model.Customer;
-import lab.springboot.springbboothttps.model.CustomerSignUpRequest;
-import lab.springboot.springbboothttps.model.CustomerSignUpResponse;
+import lab.springboot.springbboothttps.model.*;
 import lab.springboot.springbboothttps.util.CustomerUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -18,29 +16,47 @@ import java.util.Optional;
 
 @Slf4j
 @Service
-public class CustomerAuthService {
+public class CustomerService {
 
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final CustomerDao customerDao;
     private final CustomerUtil customerUtil;
-    private final CustomerUsernameSuggestionService suggestionService;
+    private final CustomerUsernameService customerUsernameService;
 
-    public CustomerAuthService(BCryptPasswordEncoder bCryptPasswordEncoder, CustomerDao customerDao, CustomerUtil customerUtil, CustomerUsernameSuggestionService suggestionService) {
+
+    public CustomerService(BCryptPasswordEncoder bCryptPasswordEncoder, CustomerDao customerDao, CustomerUtil customerUtil, CustomerUsernameService customerUsernameService) {
         this.bCryptPasswordEncoder = bCryptPasswordEncoder;
         this.customerDao = customerDao;
         this.customerUtil = customerUtil;
-        this.suggestionService = suggestionService;
+        this.customerUsernameService = customerUsernameService;
     }
+
 
     @Transactional
     public CustomerSignUpResponse signUpCustomer(@Valid CustomerSignUpRequest customerSignUpRequest) {
         Customer customer = customerUtil.parseCustomer(customerSignUpRequest, bCryptPasswordEncoder);
         Optional<Customer> customerOptional = Optional.of(customerDao.save(customer));
-        return customerOptional.map(res -> CustomerSignUpResponse.builder()
-                .signUpStatus(201)
-                .build()).orElse(CustomerSignUpResponse.builder()
+
+        return customerOptional.map(res -> {
+            customerUsernameService.saveUsernames(List.of(res));
+            return CustomerSignUpResponse.builder()
+                    .signUpStatus(201)
+                    .build();
+        }).orElse(CustomerSignUpResponse.builder()
                 .signUpStatus(500)
                 .build());
+    }
+
+    public List<String> suggestedUsernames(UsernameSuggestionRequest request) {
+        List<String> suggestedUsernames = customerUsernameService.usernameSuggestion(request.getCharacters(), request.getCount());
+        List<String> validSuggestedUsernames = new ArrayList<>();
+        for (String suggestedUsername : suggestedUsernames) {
+            Optional<CustomerUsername> optionalCustomerUsername = customerUsernameService.findUsername(suggestedUsername);
+            if (optionalCustomerUsername.isEmpty()) {
+                validSuggestedUsernames.add(suggestedUsername);
+            }
+        }
+        return validSuggestedUsernames;
     }
 
     @Transactional
@@ -51,7 +67,7 @@ public class CustomerAuthService {
             try {
                 List<Customer> customers = new ArrayList<>();
                 for (int i = 0; i < count; i++) {
-                    Customer customer = customerUtil.createRandomCustomer(suggestionService, bCryptPasswordEncoder);
+                    Customer customer = customerUsernameService.createRandomCustomerForBulkLoad(bCryptPasswordEncoder);
                     Optional<Customer> doesExist = customerDao.findCustomerByUsernameLowerCase(customer.getUsername());
                     if (doesExist.isPresent()) {
                         log.error("Customer with name {} already exists", customer.getUsername());
@@ -60,6 +76,7 @@ public class CustomerAuthService {
                     }
                 }
                 customerDao.saveAll(customers);
+                customerUsernameService.saveUsernames(customers);
             } catch (Exception e) {
                 log.error("***********Exception: {} *********** {}", e.getMessage(), e.getCause().toString());
                 throw new RuntimeException("Exception while saving customers", e);
@@ -72,4 +89,10 @@ public class CustomerAuthService {
     }
 
 
+    public List<String> searchUsernames(String term) {
+        log.info("searching results for {}", term);
+        List<String> fuzzyUsernames = customerDao.findFuzzyUsernames(term, 10);
+        log.info("searching results for {}", fuzzyUsernames);
+        return fuzzyUsernames;
+    }
 }
